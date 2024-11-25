@@ -5,7 +5,7 @@ import math, time
 import ImportObject
 
 
-class star:
+class ring:
     obj = 0
     displayList = 0
     
@@ -13,15 +13,12 @@ class star:
     posY = 0.0
     posZ = 0.0
 
-    sizeX = 1.0
-    sizeY = 1.0
-    sizeZ = 1.0
-
-    rotation = 0.0
-
+    sizeX = 0.05
+    sizeY = 0.05
+    sizeZ = 0.05
     
     def __init__(self, x, z,y):
-        self.obj = ImportObject.ImportedObject("./objects/star")
+        self.obj = ImportObject.ImportedObject("./objects/ring")
         self.posX = x
         self.posZ = z
         self.posY = y
@@ -34,17 +31,11 @@ class star:
         self.obj.drawObject()
         glEndList()
     
-    def draw(self,speed):
+    def draw(self):
         
-        self.rotation = self.rotation + speed
-
         glPushMatrix()
         glTranslatef(self.posX,self.posY,self.posZ)
-
-        glRotatef(self.rotation,0.0,1.0,0.0)
-
-        glColor3f(1.0, 0.0, 0.0)
-
+        glRotatef(90,1.0,0.0,0.0)
         glScalef(self.sizeX,self.sizeY,self.sizeZ)
 
         glCallList(self.displayList)

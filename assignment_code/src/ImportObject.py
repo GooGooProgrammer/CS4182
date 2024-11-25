@@ -86,6 +86,7 @@ class ImportedObject:
             # read vertices, norms, faces, textcoords from obj file  
             # self.verts, self.norms, self.faces, self.texCoords                  
             for line in objFile:
+                
                 ## Break the line into its components
                 vals = line.split()
                 if len(vals) > 0:

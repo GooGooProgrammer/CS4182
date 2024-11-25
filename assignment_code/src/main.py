@@ -5,7 +5,7 @@ from OpenGL.GLU import *
 import math, time, random, csv, datetime
 import ImportObject
 import PIL.Image as Image
-import jeep, cone, star
+import jeep, cone, star, ring
 
 windowSize = 600
 helpWindow = False
@@ -57,12 +57,14 @@ gameEnlarge = 10
 #concerned with obstacles (cones) & rewards (stars)
 coneAmount = 15
 starAmount = 5 #val = -10 pts
+ringAmount = 1
 diamondAmount = 1 #val = deducts entire by 1/2
 # diamondObj = diamond.diamond(random.randint(-land, land), random.randint(10.0, land*gameEnlarge))
 usedDiamond = False
 
 allcones = []
 allstars = []
+allrings = []
 obstacleCoord = []
 rewardCoord = []
 ckSense = 5.0
@@ -205,17 +207,24 @@ def display():
         cone.draw()
     # draw star
     for star in allstars:
-        star.draw()
+        star.draw(jeepSpeed)
+    for ring in allrings:
+        ring.draw()
+    
     # if (usedDiamond == False):
     #     diamondObj.draw()
     
     jeepObj.draw()
+    jeepObj.move(False,jeepSpeed/5)
     jeepObj.drawW1()
     jeepObj.drawW2()
     jeepObj.drawLight()
     #personObj.draw()
     glutSwapBuffers()
-
+    setObjView()
+    checkWhetherRingTouch()
+    collisionCheck()
+    
 def idle():#--------------with more complex display items like turning wheel---
     global tickTime, prevTime, score
     jeepObj.rotateWheel(-0.1 * tickTime)    
@@ -250,7 +259,7 @@ def setObjView():
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(90, 1, 0.1, 100)
-    gluLookAt(0, 10, jeepObj.posZ-10.0, 
+    gluLookAt(0, 10, jeepObj.posZ-20.0, 
               0, jeepObj.posY,jeepObj.posZ,
                 0, 1, 0)
 
@@ -295,22 +304,13 @@ def motionHandle(x,y):
 
 jeepSpeed = 1
 def specialKeys(keypress, mX, mY):
-    global allstars
     # things to do
     # this is the function to move the car
-    if keypress == GLUT_KEY_UP:
-        jeepObj.posZ += jeepSpeed
-        for star in allstars:
-            star.rotationSpeed+=0.1
-    elif keypress == GLUT_KEY_DOWN:
-        jeepObj.posZ -= jeepSpeed
-        for star in allstars:
-           star.rotationSpeed-=0.1
-    elif keypress == GLUT_KEY_LEFT:
+    if keypress == GLUT_KEY_LEFT:
         jeepObj.posX += jeepSpeed
     elif keypress == GLUT_KEY_RIGHT:
         jeepObj.posX -= jeepSpeed
-    setObjView()
+    
 
 def myKeyboard(key, mX, mY):
     global eyeX, eyeY, eyeZ, angle, radius, helpWindow, centered, helpWin, overReason, topView, behindView
@@ -360,12 +360,15 @@ def noReshape(newX, newY): #used to ensure program works correctly when resized
 def addCone(x,z):
     allcones.append(cone.cone(x,z))
     obstacleCoord.append((x,z))
-def addStar(x,z,y):
+def addStar(x,z):
     allstars.append(star.star(x,z,10.0))
+def addRing(x,z):
+    allrings.append(ring.ring(x,z,3))
     pass
 
 def collisionCheck():
-    global overReason, score, usedDiamond, countTime
+    global overReason, score, countTime
+    
     for obstacle in obstacleCoord:
         if dist((jeepObj.posX, jeepObj.posZ), obstacle) <= ckSense:
             overReason = "You hit an obstacle!"
@@ -374,10 +377,6 @@ def collisionCheck():
         overReason = "You ran off the road!"
         gameOver()
 
-    if (dist((jeepObj.posX, jeepObj.posZ), (diamondObj.posX, diamondObj.posZ)) <= ckSense and usedDiamond ==False):
-        print ("Diamond bonus!")
-        countTime /= 2
-        usedDiamond = True
     if (jeepObj.posZ >= land*gameEnlarge):
         gameSuccess()
         
@@ -530,7 +529,12 @@ def changeResolution(index):
 
 
     return 0
-
+def checkWhetherRingTouch():
+    for ring in allrings:
+        if abs(ring.posX - jeepObj.posX) <= 1 and abs(ring.posZ - jeepObj.posZ) <= 1:
+            global jeepSpeed
+            jeepSpeed = 2
+            
 #~~~~~~~~~~~~~~~~~~~~~~~~~the finale!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def main():
     glutInit()
@@ -592,7 +596,10 @@ def main():
     # things to do
     # add stars
     for i in range(starAmount):
-        addStar(random.randint(-land, land), random.randint(10.0, land*gameEnlarge),land*gameEnlarge/2)
+        addStar(random.randint(-land, land), random.randint(20.0, land*gameEnlarge))
+
+    for i in range(ringAmount):
+        addRing(random.randint(-land+5, land-5),  (land*gameEnlarge - 10.0)/2)
 
     for cone in allcones:
         cone.makeDisplayLists()
@@ -600,7 +607,8 @@ def main():
     for star in allstars:
         star.makeDisplayLists()
 
-    
+    for ring in allrings:
+        ring.makeDisplayLists()
     # diamondObj.makeDisplayLists()
     
     staticObjects()
